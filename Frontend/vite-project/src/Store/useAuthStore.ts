@@ -3,7 +3,7 @@ import { axiosInstance } from "../lib/axios";
 import type { AuthUser } from "../Types/authUser";
 import type { ApiResponse } from "../Types/api";
 import { getApiError } from "../utils/getApiError";
-import type {signUpInputs,loginInputs} from "shared"
+import type {signUpInputs,loginInputs, updateInputs} from "shared"
 import toast from "react-hot-toast";
 
 interface AuthStore{
@@ -21,7 +21,11 @@ interface AuthStore{
      login:(data:loginInputs)=>Promise<void>;
 
      logOut:()=>Promise<void>;
-    // updateProfile:()=>Promise<void>;
+     updateProfile:(data:updateInputs)=>Promise<void>;
+     isUpdatingProfile:boolean;
+
+     uploadProfile:(data:FormData)=>Promise<void>
+     isUploadingProfile:boolean;
 };
 
 export const useAuthStore = create<AuthStore>((set)=>({
@@ -30,6 +34,8 @@ export const useAuthStore = create<AuthStore>((set)=>({
     isSigningUp:false,
     fieldErrors:null,
     isLoggingIn:false,
+    isUpdatingProfile:false,
+    isUploadingProfile:false,
 
     clearFieldErrors:()=>set({fieldErrors:null}),
 
@@ -121,6 +127,54 @@ export const useAuthStore = create<AuthStore>((set)=>({
             const{message} = getApiError(error);
             console.log("Logout error occured",message);
             toast.error(message || "Error occured in logout");
+        }
+    },
+
+    updateProfile:async(data:updateInputs)=>{
+        try{
+            set({isUpdatingProfile:true});
+
+            const response = await axiosInstance.post<ApiResponse<AuthUser>>("/users/updateinfo",data);
+
+            set({authUser:response.data.data});
+            toast.success(response.data.message || "Profile updated successfully");
+        }
+        catch(error:unknown)
+        {
+            const{message} = getApiError(error);
+
+            console.log("Error occured in update",message);
+            toast.error(message || "Error occured in updating profile")
+        }
+        finally{
+            set({isUpdatingProfile:false})
+        }
+    },
+
+    uploadProfile:async(formData)=>{
+        try{
+           set({isUploadingProfile:true});
+
+           const response = await axiosInstance.post<ApiResponse<AuthUser>>("/users/upload-profile",formData,{
+            headers:{
+                "Content-Type":"multipart/form-data"
+            }
+           })
+
+           set({authUser:response.data.data});
+
+           toast.success(response.data.message || "Profile Pic uploaded successfully");
+        }
+        catch(error:unknown)
+        {
+            const {message} = getApiError(error);
+
+            console.log("Error occured in uploading profile",message);
+
+            toast.error(message || "Cannot upload profile,try again");
+        }
+        finally{
+            set({isUploadingProfile:false});
         }
     }
 }))

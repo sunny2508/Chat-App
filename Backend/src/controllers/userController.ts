@@ -4,6 +4,7 @@ import User from "../models/usermodel.js"
 import type { ObjectId, Types } from "mongoose";
 import cloudinary from "../lib/cloudinary.js";
 
+
 interface tokenPair{
     accessToken:string;
     refreshToken:string;
@@ -285,4 +286,74 @@ const checkAuth = async(req:Request,res:Response)=>{
         return res.status(500).json({success:false,message:"Cannot check authentication right not,try again later"});
     }
 }
-export {signUp,Login,updateInfo,logOut,checkAuth}
+
+const uploadProfile = async(req:Request,res:Response)=>{
+    try{
+        if(!req.user)
+        {
+            return res.status(401).json({success:false,message:"You are unauthorised"});
+        }
+
+        if(!req.file)
+        {
+            console.log("BODY:", req.body);
+            console.log("FILE:", req.file);
+
+            return res.status(400).json({success:false,message:"Image is required" });
+        }
+
+        const user = await User.findById(req.user._id);
+
+        if(!user)
+        {
+            return res.status(404).json({success:false,message:"User does not exist"});
+        }
+
+        if(user.profilePic?.publicId)
+        {
+            try{
+              await cloudinary.uploader.destroy(user.profilePic.publicId);
+            }
+            catch(error:unknown)
+            {
+                if(error instanceof Error)
+                {
+                    console.log("Error occured in deleting profile",error.message);
+                }
+                return res.status(500).json({success:false,messag:"Cannot change profile right now ,try again"});
+            }
+        }
+
+        const uploadedResponse = cloudinary.uploader.upload_stream(
+            {folder:"profile-pic"},
+            async(error,result)=>{
+                if(error || !result)
+                {
+                    return res.status(500).json({success:false,message:"Image upload failed"});
+                }
+
+                user.profilePic = {
+                    url:result.secure_url,
+                    publicId:result.public_id
+                }
+
+                await user.save();
+
+                const updatedUser = await User.findById(user._id).select("-password -refreshToken");
+
+                return res.status(201).json({success:true,data:updatedUser,message:"Image uploaded successfully"});
+            }
+        );
+
+      uploadedResponse.end(req.file.buffer);
+    }
+    catch(error:unknown)
+    {
+        if(error instanceof Error)
+        {
+            console.log("Error occured in uploading profile",error.message);
+        }
+        return res.status(500).json({success:false,message:"Cannot upload your profile right now,try again later"});
+    }
+}
+export {signUp,Login,updateInfo,logOut,checkAuth,uploadProfile}
