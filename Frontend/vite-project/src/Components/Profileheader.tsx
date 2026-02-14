@@ -1,13 +1,13 @@
 import  { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useAuthStore } from '../Store/useAuthStore';
-import { LogOutIcon } from 'lucide-react';
+import { LoaderIcon, LogOutIcon } from 'lucide-react';
 
 
 const Profileheader = () => {
 
   const [selectedImg,setSelectedImg] = useState<string | null>(null);
 
-  const {authUser,logOut,uploadProfile}  = useAuthStore();
+  const {authUser,logOut,uploadProfile,isUploadingProfile}  = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleInput = async(e:ChangeEvent<HTMLInputElement>)=>{
@@ -50,14 +50,22 @@ const Profileheader = () => {
         <div className='flex items-center gap-x-7'>
           {/*Avatar*/}
           <div className='avatar'>
-           <button className='size-14 rounded-full relative group'
-           onClick={()=>fileInputRef.current?.click()}>
+           <button className='size-14 rounded-full relative group overflow-hidden'
+           onClick={()=>fileInputRef.current?.click()}
+           disabled={isUploadingProfile}>
             <img src={selectedImg || authUser?.profilePic?.url || "/avatar.png"}
             className='size-full object-cover'/>
+            
+            {/*uploading overlay*/}
+            {isUploadingProfile && <div className='absolute inset-0 flex items-center justify-center bg-black/60'>
+              <LoaderIcon className='size-5 animate-spin text-white'/>
+              </div>}
 
+            {/*hover overlay*/}
+            {!isUploadingProfile && 
             <div className='absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity'>
               <span className='text-xs text-white'>Change</span>
-            </div>
+            </div>}
            </button>
 
            <input type='file'
