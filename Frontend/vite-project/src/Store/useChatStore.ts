@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import type { Message } from "../Types/message";
 
 
-type ActiveTab = "chat" | "contacts"
+type ActiveTab = "Chats" | "Contacts"
 
 interface ChatStore{
     allContacts:AuthUser[];
@@ -19,10 +19,11 @@ interface ChatStore{
     isContactsLoading:boolean;
     isChatPartnersLoading:boolean;
     isMessageLoading:boolean;
+    setActiveTab:(tab:ActiveTab)=>void;
 
-    getAllContacts:()=>Promise<void>
+    getAllContacts:()=>Promise<void>;
 
-    getChatPartners:()=>Promise<void>
+    getChatPartners:()=>Promise<void>;
 
 }
 
@@ -32,10 +33,12 @@ export const useChatStore = create<ChatStore>((set)=>({
     allChatsPartners:[],
     selectedUser:null,
     messages:[],
-    activeTab:"chat",
+    activeTab:"Chats",
     isMessageLoading:false,
     isChatPartnersLoading:false,
     isContactsLoading:false,
+
+    setActiveTab:(tab)=>set({activeTab:tab}),
 
     getAllContacts:async()=>{
         try{
