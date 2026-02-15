@@ -20,6 +20,7 @@ interface ChatStore{
     isChatPartnersLoading:boolean;
     isMessageLoading:boolean;
     setActiveTab:(tab:ActiveTab)=>void;
+    setSelectedUser:(user:AuthUser)=>void;
 
     getAllContacts:()=>Promise<void>;
 
@@ -39,6 +40,7 @@ export const useChatStore = create<ChatStore>((set)=>({
     isContactsLoading:false,
 
     setActiveTab:(tab)=>set({activeTab:tab}),
+    setSelectedUser:(user)=>set({selectedUser:user}),
 
     getAllContacts:async()=>{
         try{

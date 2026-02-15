@@ -5,7 +5,11 @@ import UsersLoadingSkeleton from "./UsersLoadingSkeleton";
 
 const ChatList = () => {
 
-  const {allChatsPartners,isChatPartnersLoading,getChatPartners} = useChatStore();
+  const {allChatsPartners,isChatPartnersLoading,getChatPartners,setSelectedUser} = useChatStore();
+
+  useEffect(()=>{
+    getChatPartners();
+  },[getChatPartners]);
 
   if(isChatPartnersLoading)
   {
@@ -17,12 +21,25 @@ const ChatList = () => {
     return <NoChatsFound/>
   }
 
-  useEffect(()=>{
-    getChatPartners();
-  },[getChatPartners]);
+  
 
   return (
     <>
+    {allChatsPartners.map((chatPatner)=>(
+      <div key={chatPatner.singleUser._id}
+      onClick={()=>setSelectedUser(chatPatner.singleUser)}
+      className="bg-cyan-400/10 p-4 cursor-pointer rounded-lg
+      hover:bg-cyan-500/20 transition-colors">
+       <div className="flex items-center gap-3 ">
+        <div>
+          <div className="size-12 rounded-full">
+            <img src={chatPatner.singleUser.profilePic?.url || "/avatar.png"}/>
+          </div>
+        </div>
+        <h4 className="text-slate-200 font-medium">{chatPatner.singleUser.name}</h4>
+       </div>
+      </div>
+   ))}
     </>
   )
 }
