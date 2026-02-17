@@ -20,11 +20,14 @@ interface ChatStore{
     isChatPartnersLoading:boolean;
     isMessageLoading:boolean;
     setActiveTab:(tab:ActiveTab)=>void;
-    setSelectedUser:(user:AuthUser)=>void;
+    setSelectedUser:(user:AuthUser | null)=>void;
 
     getAllContacts:()=>Promise<void>;
 
     getChatPartners:()=>Promise<void>;
+
+    getMessageById:(_id:string)=>Promise<void>;
+
 
 }
 
@@ -79,6 +82,28 @@ export const useChatStore = create<ChatStore>((set)=>({
         finally{
             set({isChatPartnersLoading:false});
         }
-    }
+    },
+
+    getMessageById:async(id)=>{
+        try{
+           set({isMessageLoading:true});
+
+           const response = await axiosInstance.get<ApiResponse<Message[]>>(`messages/${id}`);
+
+           set({messages:response.data.data});
+           toast.success(response.data.message || "Messages fetched successfully");
+        }
+        catch(error:unknown)
+        {
+            const {message} = getApiError(error);
+
+            console.log("Error in fetching messages",message);
+
+            toast.error(message || "Error in fetching messages");
+        }
+        finally{
+            set({isMessageLoading:false});
+        }
+    },
 
 }))

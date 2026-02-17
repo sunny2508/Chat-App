@@ -30,8 +30,9 @@ const ChatList = () => {
       onClick={()=>setSelectedUser(chatPatner.singleUser)}
       className="bg-cyan-400/10 p-4 cursor-pointer rounded-lg
       hover:bg-cyan-500/20 transition-colors">
+        {/*Todo:Make it work with WebSocket*/}
        <div className="flex items-center gap-3 ">
-        <div>
+        <div className="avatar">
           <div className="size-12 rounded-full">
             <img src={chatPatner.singleUser.profilePic?.url || "/avatar.png"}/>
           </div>

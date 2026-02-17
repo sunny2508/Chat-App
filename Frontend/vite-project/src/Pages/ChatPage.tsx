@@ -1,5 +1,6 @@
 //import { useAuthStore } from "../Store/useAuthStore"
 
+import { useEffect } from "react";
 import ActiveTabSwitch from "../Components/ActiveTabSwitch"
 import ChatContainer from "../Components/ChatContainer";
 import ChatList from "../Components/ChatList";
@@ -14,7 +15,15 @@ import { useChatStore } from "../Store/useChatStore"
 const ChatPage = () => {
 
   //const {logOut,authUser} = useAuthStore();
-  const {activeTab,selectedUser} = useChatStore();
+  const {activeTab,selectedUser,setSelectedUser} = useChatStore();
+
+  useEffect(()=>{
+    return(()=>{
+      setSelectedUser(null);
+    })
+  },[]);
+  
+  
   
   return (
     <div className="relative w-full max-w-6xl h-200">
@@ -31,7 +40,6 @@ const ChatPage = () => {
 
       {/*Right side*/}
       <div className="flex-1 flex flex-col bg-zinc-900/50 backdrop-blur-sm rounded-xl">
-      <h1 className="text-5xl">Hello This is Message Section</h1>
       {selectedUser? <ChatContainer/>:<NoConversationContainer/>}
       </div>
       </div>
