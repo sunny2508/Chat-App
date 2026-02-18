@@ -2,7 +2,9 @@
 
 const MessageInput = () => {
   return (
-    <div>MessageInput</div>
+    <div>
+        
+    </div>
   )
 }
 

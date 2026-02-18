@@ -6,6 +6,8 @@ import type { ChatPartner } from "../Types/chatPartners";
 import { getApiError } from "../utils/getApiError";
 import toast from "react-hot-toast";
 import type { Message } from "../Types/message";
+import { useAuthStore } from "./useAuthStore";
+
 
 
 type ActiveTab = "Chats" | "Contacts"
@@ -28,11 +30,13 @@ interface ChatStore{
 
     getMessageById:(_id:string)=>Promise<void>;
 
+    sendMessage:(message:Message)=>Promise<void>;
+
 
 }
 
 
-export const useChatStore = create<ChatStore>((set)=>({
+export const useChatStore = create<ChatStore>((set,get)=>({
     allContacts:[],
     allChatsPartners:[],
     selectedUser:null,
@@ -105,5 +109,62 @@ export const useChatStore = create<ChatStore>((set)=>({
             set({isMessageLoading:false});
         }
     },
+
+    sendMessage:async(messageData)=>{
+        const {selectedUser} = get();
+        const {authUser} = useAuthStore.getState();
+
+        if(!selectedUser || !authUser)
+        {
+            return;
+        }
+
+        const tempId = Date.now().toString();
+
+        const optimisticMessage:Message = {
+            _id:tempId,
+            senderId:authUser._id,
+            receiverId:selectedUser._id,
+            text:messageData.text,
+            image:messageData.image,
+            createdAt:new Date().toISOString(),
+            updatedAt:new Date().toISOString(),
+        }
+
+        set((state)=>({
+            messages:[...state.messages,optimisticMessage]
+        }));
+
+
+        try{
+          const response = await axiosInstance.post<ApiResponse<Message>>(`/messages/send/${selectedUser._id}`,messageData);
+
+          const realMessage = response.data.data;
+          if(!realMessage)
+          {
+            return;
+          }
+
+          set((state)=>(
+            {messages:state.messages.map((msg)=>
+            msg._id === tempId ? realMessage:msg)}
+          ));
+        }
+        catch(error:unknown)
+        {
+
+            set((state)=>(
+                {messages:state.messages.filter((msg)=>
+                msg._id !== tempId)}
+            ));
+
+            const {message} = getApiError(error);
+
+            console.log("Error occured",message);
+
+            toast.error(message || "Failed to send message");
+        }
+    },
+
 
 }))
