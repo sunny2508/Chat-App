@@ -296,9 +296,7 @@ const uploadProfile = async(req:Request,res:Response)=>{
 
         if(!req.file)
         {
-            console.log("BODY:", req.body);
-            console.log("FILE:", req.file);
-
+            
             return res.status(400).json({success:false,message:"Image is required" });
         }
 

@@ -70,83 +70,191 @@ const getMessage = async(req:Request,res:Response)=>{
 
 //send message controller
 
-const sendMessage = async(req:Request,res:Response)=>
-{
+// const sendMessage = async(req:Request,res:Response)=>
+// {
+//     try{
+//         const result = zodMessageSchema.safeParse(req.body);
+
+//         if(!result.success)
+//         {
+//             const errMessage = result.error.issues[0]?.message;
+//             return res.status(400).json({success:false,message:errMessage});
+//         }
+
+//         if(!req.user)
+//         {
+//           return res.status(401).json({success:false,message:"You are unauthorised"});
+//         }
+
+//         const senderId = req.user._id;
+
+//         const {id:receiverId} = req.params;
+
+//         if(!receiverId || !mongoose.Types.ObjectId.isValid(receiverId))
+//         {
+//             return res.status(400).json({success:false,message:"Reciever id is not valid"});
+//         }
+
+//         const {text} = result.data;
+//         let {image} = result.data;
+
+//         if(image !== undefined)
+//         {
+//             try{
+//                const uploadedResponse = await cloudinary.uploader.upload(image,{
+//                 folder:"message-image"
+//                });
+//                image = uploadedResponse.secure_url;
+//             }
+//             catch(error:unknown)
+//             {
+//                 if(error instanceof Error)
+//                 {
+//                     console.log("Error occured in uploading image",error.message);
+//                 }
+//                 return res.status(500).json({success:false,message:"Cannot send image right now,try again later"});
+//             }
+//         }
+
+//         const messageData:{
+//             senderId:Types.ObjectId;
+//             receiverId:string;
+//             text?:string;
+//             image?:string;
+//         }={
+//             senderId:senderId,
+//             receiverId:receiverId
+//         };
+
+//         if(text !== undefined)
+//         {
+//             messageData.text = text;
+//         }
+
+//         if(image !== undefined)
+//         {
+//             messageData.image = image;
+//         }
+
+//         const newMessage = await Message.create(messageData);
+//         return res.status(201).json({success:true,data:newMessage,message:"Message sent successfully"})
+//     }
+//     catch(error:unknown)
+//     {
+//         if(error instanceof Error)
+//         {
+//           console.log("Error occured in sending message",error.message);
+//         }
+//     }
+//     return res.status(500).json({success:false,message:"Cannot send message right now,try again later"});
+// }
+
+//send message controller
+
+const sendMessage = async(req:Request,res:Response)=>{
     try{
         const result = zodMessageSchema.safeParse(req.body);
 
         if(!result.success)
         {
-            const errMessage = result.error.issues[0]?.message;
-            return res.status(400).json({success:false,message:errMessage});
+            const errMessages = result.error.issues[0]?.message;
+            return res.status(400).json({success:false,message:errMessages});
         }
 
         if(!req.user)
         {
-          return res.status(401).json({success:false,message:"You are unauthorised"});
+            return res.status(401).json({success:false,message:"You are unauthorised"});
         }
 
         const senderId = req.user._id;
-
         const {id:receiverId} = req.params;
 
         if(!receiverId || !mongoose.Types.ObjectId.isValid(receiverId))
         {
-            return res.status(400).json({success:false,message:"Reciever id is not valid"});
+            return res.status(400).json({success:false,message:"Receiver id is not valid"});
         }
 
         const {text} = result.data;
-        let {image} = result.data;
 
-        if(image !== undefined)
+        const file = req.file;
+
+        if(!text && !file)
         {
-            try{
-               const uploadedResponse = await cloudinary.uploader.upload(image,{
-                folder:"message-image"
-               });
-               image = uploadedResponse.secure_url;
+            return res.status(400).json({success:false,message:"Message must contain text or image"})
+        }
+
+        //Only text
+        if(!file)
+        {
+            const messageData:{
+                senderId:Types.ObjectId;
+                receiverId:string;
+                text?:string;
+            } = {
+                senderId:senderId,
+                receiverId:receiverId
             }
-            catch(error:unknown)
+
+            if(text !== undefined)
             {
-                if(error instanceof Error)
-                {
-                    console.log("Error occured in uploading image",error.message);
-                }
-                return res.status(500).json({success:false,message:"Cannot send image right now,try again later"});
+                messageData.text = text;
             }
+
+            const newMessage = await Message.create(messageData);
+            return res.status(200).json({success:true,data:newMessage,message:"Message sent successfully"});
         }
 
-        const messageData:{
-            senderId:Types.ObjectId;
-            receiverId:string;
-            text?:string;
-            image?:string;
-        }={
-            senderId:senderId,
-            receiverId:receiverId
-        };
+        let image:string;
 
-        if(text !== undefined)
+        //Image + text
+        if(file)
         {
-            messageData.text = text;
-        }
+          const uploadedResponse = cloudinary.uploader.upload_stream(
+            {folder:"message-image"},
+            async(error,result)=>{
+                if(error || !result)
+                {
+                    return res.status(500).json({success:false,message:"Message image upload failed"});
+                }
 
-        if(image !== undefined)
-        {
-            messageData.image = image;
-        }
+                image = result.secure_url;
 
-        const newMessage = await Message.create(messageData);
-        return res.status(201).json({success:true,data:newMessage,message:"Message sent successfully"})
+                const messageData:{
+                    senderId:Types.ObjectId;
+                    receiverId:string;
+                    text?:string;
+                    image?:string;
+                }={
+                    senderId:senderId,
+                    receiverId:receiverId
+                }
+
+                if(text !== undefined)
+                {
+                   messageData.text = text;
+                }
+
+                if(image !== undefined)
+                {
+                    messageData.image = image;
+                }
+
+                const newMessage = await Message.create(messageData);
+
+                return res.status(200).json({success:true,data:newMessage,message:"Message sent successfully"});
+            }
+          )
+          uploadedResponse.end(file.buffer);
+        }
     }
     catch(error:unknown)
     {
         if(error instanceof Error)
         {
-          console.log("Error occured in sending message",error.message);
+            console.log("Error occured in sending message",error.message);
         }
+        return res.status(500).json({success:false,message:"Cannot send message,try again later"});
     }
-    return res.status(500).json({success:false,message:"Cannot send message right now,try again later"});
 }
 
 // get chat partners controller

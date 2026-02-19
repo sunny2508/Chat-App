@@ -11,7 +11,7 @@ const Profileheader = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleInput = async(e:ChangeEvent<HTMLInputElement>)=>{
-    const files = e.target.files;
+    const files = e.currentTarget.files;
 
     if(!files)
     {

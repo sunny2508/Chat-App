@@ -7,6 +7,8 @@ import { getApiError } from "../utils/getApiError";
 import toast from "react-hot-toast";
 import type { Message } from "../Types/message";
 import { useAuthStore } from "./useAuthStore";
+import type { zodMessageInputs } from "shared";
+import type { ImagePayload } from "../Types/ImagePayload";
 
 
 
@@ -30,8 +32,10 @@ interface ChatStore{
 
     getMessageById:(_id:string)=>Promise<void>;
 
-    sendMessage:(message:Message)=>Promise<void>;
-
+    sendMessage:{
+        (data:zodMessageInputs):Promise<void>;
+        (data:ImagePayload,isMultiPart:true):Promise<void>;
+    }
 
 }
 
@@ -110,7 +114,7 @@ export const useChatStore = create<ChatStore>((set,get)=>({
         }
     },
 
-    sendMessage:async(messageData)=>{
+    sendMessage:async (messageData:zodMessageInputs | ImagePayload,isMultiPart?:true)=>{
         const {selectedUser} = get();
         const {authUser} = useAuthStore.getState();
 
@@ -121,12 +125,14 @@ export const useChatStore = create<ChatStore>((set,get)=>({
 
         const tempId = Date.now().toString();
 
+        const isImage = isMultiPart === true;
+
         const optimisticMessage:Message = {
             _id:tempId,
             senderId:authUser._id,
             receiverId:selectedUser._id,
-            text:messageData.text,
-            image:messageData.image,
+            text:!isImage? (messageData as zodMessageInputs).text:undefined,
+            image:isImage ?(messageData as ImagePayload).previewURL:undefined,
             createdAt:new Date().toISOString(),
             updatedAt:new Date().toISOString(),
         }
@@ -134,10 +140,12 @@ export const useChatStore = create<ChatStore>((set,get)=>({
         set((state)=>({
             messages:[...state.messages,optimisticMessage]
         }));
-
-
         try{
-          const response = await axiosInstance.post<ApiResponse<Message>>(`/messages/send/${selectedUser._id}`,messageData);
+           const body = isImage ? (messageData as ImagePayload).formData : messageData;
+
+          const config = isImage ? {headers:{"Content-Type":"multipart/form-data"}}:undefined
+
+          const response = await axiosInstance.post<ApiResponse<Message>>(`/messages/send/${selectedUser._id}`,body,config);
 
           const realMessage = response.data.data;
           if(!realMessage)
