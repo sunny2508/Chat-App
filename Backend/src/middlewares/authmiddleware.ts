@@ -2,7 +2,7 @@ import jwt,{type JwtPayload} from "jsonwebtoken"
 import type { Request,Response,NextFunction } from "express";
 import User,{type IUser} from "../models/usermodel.js";
 
-interface DecodedTokenType extends JwtPayload{
+export interface DecodedTokenType extends JwtPayload{
     _id:string;
     name:string;
     email:string;
