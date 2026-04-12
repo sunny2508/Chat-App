@@ -1,6 +1,8 @@
 import { WebSocketServer } from "ws";
 import http, { IncomingMessage } from "http";
 import { authenticateWs, type AuthenticateWebSocket } from "./auth.js";
+import { addUser, getOnlineUsers, removeUser } from "./usersMap.js";
+import { broadCast } from "./broadcast.js";
 
 const allowedOrigins = ["http://localhost:5173"];
 
@@ -27,7 +29,28 @@ const initWebSocket = (server:http.Server)=>{
             return;
         }
 
+        if(!ws.user)
+        {
+            return;
+        }
+
+        const userId = ws.user._id.toString();
+        addUser(userId,ws);
+
+        console.log("A user connected",ws.user.name);
+
+        broadCast(wss,{type:"getOnlineUsers",data:getOnlineUsers()});
+
         ws.send(JSON.stringify({success:true,message:"Connected"}));
+
+        ws.on("close",()=>{
+            
+            removeUser(userId);//user removed
+
+            console.log("A user disconnected",ws.user?.name);
+
+            broadCast(wss,{type:"getOnlineUsers",data:getOnlineUsers()});
+        })
     })
 }
 
