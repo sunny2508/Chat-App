@@ -1,19 +1,18 @@
-import {IncomingMessage} from "http";
+import { WebSocket } from "ws";
+import  {IncomingMessage} from "http"
 import type { DecodedTokenType } from "../middlewares/authmiddleware.js";
 import type { IUser } from "../models/usermodel.js";
-import { WebSocket } from "ws";
-import cookie from "cookie"
 import jwt from "jsonwebtoken"
+import cookie from "cookie"
 import User from "../models/usermodel.js";
 
-export interface AuthenticateWebSocket extends WebSocket
-{
-    user?:IUser;
+
+export interface AuthenticateWebSocket extends WebSocket{
+  user:IUser;
 }
 
-const authenticateWs = async(ws:AuthenticateWebSocket,req:IncomingMessage):Promise<boolean> =>
-{
-    try{
+const authenticateWs = async (ws:AuthenticateWebSocket,req:IncomingMessage):Promise<boolean> =>{
+  try{
       const cookies = cookie.parse(req.headers.cookie || "");
 
       const token = cookies.accessToken || req.headers.authorization?.split(" ")[1];
@@ -30,22 +29,22 @@ const authenticateWs = async(ws:AuthenticateWebSocket,req:IncomingMessage):Promi
 
       if(!user)
       {
-        ws.close(4002,"User not found");
+        ws.close(4002,"User does not exist");
         return false;
       }
 
       ws.user = user;
       return true;
-    }
-    catch(error:unknown)
+  }
+  catch(error:unknown)
+  {
+    if(error instanceof Error)
     {
-        if(error instanceof Error)
-        {
-            console.log("Token expired or not valid",error.message);
-        }
-        ws.close(4003,"Token expired or not valid");
-        return false;
+      console.log("Token not valid  or expired",error.message);
     }
+    ws.close(4003,"Token not valid");
+    return false;
+  }
 }
 
 export {authenticateWs};

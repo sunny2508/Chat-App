@@ -2,6 +2,7 @@ import type { AuthenticateWebSocket } from "./auth.js";
 
 const onlineUsers = new Map<string,AuthenticateWebSocket>();
 
+
 const addUser = (userId:string,ws:AuthenticateWebSocket)=>{
     onlineUsers.set(userId,ws);
 }
