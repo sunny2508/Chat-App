@@ -5,6 +5,9 @@ import type { ApiResponse } from "../Types/api";
 import { getApiError } from "../utils/getApiError";
 import type {signUpInputs,loginInputs, updateInputs} from "shared"
 import toast from "react-hot-toast";
+import type { wsMessage } from "../Types/wsMessage";
+
+const BASE_URL = "ws://localhost:3000";
 
 interface AuthStore{
     authUser:AuthUser | null;
@@ -26,9 +29,16 @@ interface AuthStore{
 
      uploadProfile:(data:FormData)=>Promise<void>
      isUploadingProfile:boolean;
+
+     socket:WebSocket | null;
+     onlineUsers:string[];
+
+     connectSocket:()=>void;
+     dissConnectSocket:()=>void;
+     
 };
 
-export const useAuthStore = create<AuthStore>((set)=>({
+export const useAuthStore = create<AuthStore>((set,get)=>({
     authUser:null,
     isCheckingAuth:false,
     isSigningUp:false,
@@ -36,6 +46,9 @@ export const useAuthStore = create<AuthStore>((set)=>({
     isLoggingIn:false,
     isUpdatingProfile:false,
     isUploadingProfile:false,
+
+    socket:null,
+    onlineUsers:[],
 
     clearFieldErrors:()=>set({fieldErrors:null}),
 
@@ -45,7 +58,8 @@ export const useAuthStore = create<AuthStore>((set)=>({
           set({isCheckingAuth:true});
           const response = await axiosInstance.get<ApiResponse<AuthUser>>("/users/checkauth");
           
-          set({authUser:response.data.data?? null})
+          set({authUser:response.data.data?? null});
+          get().connectSocket();
         }
         catch(error:unknown)
         {
@@ -94,6 +108,7 @@ export const useAuthStore = create<AuthStore>((set)=>({
 
             set({authUser:response.data.data});
             toast.success(response.data.message || "Login successfull");
+            get().connectSocket();
         }
         catch(error:unknown)
         {
@@ -121,6 +136,7 @@ export const useAuthStore = create<AuthStore>((set)=>({
 
            set({authUser:null});
            toast.success(response.data.message || "Logged out successfully");
+           get().dissConnectSocket();
         }
         catch(error:unknown)
         {
@@ -176,6 +192,52 @@ export const useAuthStore = create<AuthStore>((set)=>({
         finally{
             set({isUploadingProfile:false});
         }
-    }
-}))
+    },
 
+    connectSocket:()=>{
+        const authUser = get().authUser;
+
+        if(!authUser || get().socket?.readyState === WebSocket.OPEN)
+        {
+            return;
+        }
+
+        //making webSocket instance
+        const socket = new WebSocket(BASE_URL);
+
+        socket.onopen = ()=>{
+            console.log("WebSocket connected");
+            set({socket});
+        };
+
+        socket.onmessage = (event:MessageEvent<string>)=>{
+            const data = JSON.parse(event.data) as wsMessage;
+
+            if(data.type === "getOnlineUsers")
+            {
+                set({onlineUsers:data.data});
+            }
+        };
+
+        socket.onclose = ()=>{
+            console.log("WebSocket disconnected");
+            set({socket:null});
+        };
+
+        socket.onerror = (error)=>{
+            console.log("WebSocket error",error);
+            toast.error("Connection error,Please refresh the page");
+        };
+    },
+
+    dissConnectSocket:()=>{
+        const socket = get().socket;
+
+        if(socket?.readyState === WebSocket.OPEN)
+        {
+            socket.close();
+            set({socket:null});
+        };
+    },
+
+}))

@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useChatStore } from "../Store/useChatStore"
 import { XIcon } from "lucide-react";
+import { useAuthStore } from "../Store/useAuthStore";
 
 const ChatHeader = () => {
 
     const {selectedUser,setSelectedUser} = useChatStore();
+    const {onlineUsers} = useAuthStore();
 
     useEffect(()=>{
         const handleEsc = (e:KeyboardEvent)=>{
@@ -26,10 +28,14 @@ const ChatHeader = () => {
     <div className="flex justify-between items-center bg-cyan-800/50
     border-b-slate-500 border-b rounded-xl max-h-21 px-6 flex-1 ">
         <div className="flex items-center gap-x-3">
+            <div className="relative">
             <div className="avatar">
                 <div className="size-12 rounded-full">
                     <img src={selectedUser?.profilePic?.url || "/avatar.png"} alt={selectedUser?.name}/>
                 </div>
+            </div>
+
+            
             </div>
 
             <div>
