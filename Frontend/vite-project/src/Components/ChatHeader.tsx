@@ -8,6 +8,8 @@ const ChatHeader = () => {
     const {selectedUser,setSelectedUser} = useChatStore();
     const {onlineUsers} = useAuthStore();
 
+    const isOnline = selectedUser?._id ? onlineUsers.includes(selectedUser._id) : false;
+
     useEffect(()=>{
         const handleEsc = (e:KeyboardEvent)=>{
             if(e.key === "Escape")
@@ -35,12 +37,12 @@ const ChatHeader = () => {
                 </div>
             </div>
 
-            
+            <span className={`absolute right-0 bottom-0 size-3 rounded-full ring-0 ring-base-100 ${isOnline?"bg-green-500":"bg-gray-500"}`}></span>
             </div>
 
             <div>
                 <h3 className="font-medium text-slate-100">{selectedUser?.name}</h3>
-                <p className="text-sm text-slate-200">Online</p>
+                <p className="text-sm text-slate-200">{isOnline?"Online":"Offline"}</p>
             </div>
         </div>
 

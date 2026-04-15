@@ -36,7 +36,7 @@ const ContactList = () => {
           </div>
         </div>
         {/*Online users or not */}
-        <span className={`absolute right-0 bottom-0 size-3 ring-0 ring-base-100 ${onlineUsers.includes(contact._id)?"bg-green-500":"bg-gray-500"}`}></span>
+        <span className={`absolute right-0 bottom-0 size-3 rounded-full ring-0 ring-base-100 ${onlineUsers.includes(contact._id)?"bg-green-500":"bg-gray-500"}`}></span>
         </div>
         <h4 className="font-medium text-slate-200">{contact.name}</h4>
        </div>

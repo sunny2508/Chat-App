@@ -44,7 +44,7 @@ const ChatList = () => {
         </div>
 
         {/*Online users or not */}
-        <span className={`absolute bottom-0 right-0 size-3 ring-0 ring-base-100 ${onlineUsers.includes(chatPatner.singleUser._id)?"bg-green-500":"bg-gray-500"}`}></span>
+        <span className={`absolute bottom-0 right-0 size-3 rounded-full ring-0 ring-base-100 ${onlineUsers.includes(chatPatner.singleUser._id)?"bg-green-500":"bg-gray-500"}`}></span>
         </div>
         <h4 className="text-slate-200 font-medium">{chatPatner.singleUser.name}</h4>
        </div>
