@@ -49,12 +49,15 @@ const Profileheader = () => {
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-x-7'>
           {/*Avatar*/}
+          <div className='relative'>
           <div className='avatar'>
            <button className='size-14 rounded-full relative group overflow-hidden'
            onClick={()=>fileInputRef.current?.click()}
            disabled={isUploadingProfile}>
             <img src={selectedImg || authUser?.profilePic?.url || "/avatar.png"}
             className='size-full object-cover'/>
+
+          
             
             {/*uploading overlay*/}
             {isUploadingProfile && <div className='absolute inset-0 flex items-center justify-center bg-black/60'>
@@ -68,12 +71,16 @@ const Profileheader = () => {
             </div>}
            </button>
 
+           <span className='absolute bottom-0 size-3 right-0 rounded-full ring-2
+          ring-base-100 bg-green-500'></span>
+
            <input type='file'
            accept='image/*'
            ref={fileInputRef}
           onChange={handleInput}
           className='hidden'
            />
+          </div>
           </div>
 
           {/*Username*/}
