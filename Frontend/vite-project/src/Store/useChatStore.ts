@@ -12,6 +12,7 @@ import type { ImagePayload } from "../Types/ImagePayload";
 
 
 
+
 type ActiveTab = "Chats" | "Contacts"
 
 interface ChatStore{
@@ -35,7 +36,9 @@ interface ChatStore{
     sendMessage:{
         (data:zodMessageInputs):Promise<void>;
         (data:ImagePayload,isMultiPart:true):Promise<void>;
-    }
+    };
+
+    handleIncomingMessage:(newMessage:Message)=>void;
 
 }
 
@@ -174,5 +177,14 @@ export const useChatStore = create<ChatStore>((set,get)=>({
         }
     },
 
+    handleIncomingMessage:(newMessage)=>{
 
+        const {selectedUser} = get();
+
+        if(!selectedUser || newMessage.senderId !== selectedUser._id)
+        {
+            return;
+        }
+        set({messages:[...get().messages,newMessage]});
+    },
 }))

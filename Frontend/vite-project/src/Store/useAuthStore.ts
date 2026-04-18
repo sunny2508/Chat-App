@@ -6,6 +6,7 @@ import { getApiError } from "../utils/getApiError";
 import type {signUpInputs,loginInputs, updateInputs} from "shared"
 import toast from "react-hot-toast";
 import type { wsMessage } from "../Types/wsMessage";
+import { useChatStore } from "./useChatStore";
 
 const BASE_URL = "ws://localhost:3000";
 
@@ -211,11 +212,20 @@ export const useAuthStore = create<AuthStore>((set,get)=>({
         };
 
         socket.onmessage = (event:MessageEvent<string>)=>{
+            console.log("=== ON Message fired ===");
+            console.log("Raw event data:",event.data);
             const data = JSON.parse(event.data) as wsMessage;
+            console.log("Parsed data:",data);
 
             if(data.type === "getOnlineUsers")
             {
                 set({onlineUsers:data.data});
+            }
+
+            if(data.type === "newMessage")
+            {
+                console.log("new Message type detected");
+                useChatStore.getState().handleIncomingMessage(data.data);
             }
         };
 

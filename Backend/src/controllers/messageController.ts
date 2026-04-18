@@ -5,7 +5,7 @@ import User from "../models/usermodel.js";
 import { request, type Request,type Response } from "express";
 import { zodMessageSchema } from "shared";
 import { success } from "zod";
-import { getUserWs } from "../webSockets/usersMap.js";
+import { getUserWs, onlineUsers } from "../webSockets/usersMap.js";
 
 
 // get all contacts controller
@@ -202,6 +202,16 @@ const sendMessage = async(req:Request,res:Response)=>{
             }
 
             const newMessage = await Message.create(messageData);
+
+            const receiverWs = getUserWs(receiverId);
+
+            if(receiverWs)
+            {
+              receiverWs.send(JSON.stringify({
+                type:"newMessage",
+                data:newMessage
+              }));
+            }
             return res.status(200).json({success:true,data:newMessage,message:"Message sent successfully"});
         }
 
@@ -243,9 +253,9 @@ const sendMessage = async(req:Request,res:Response)=>{
                 const newMessage = await Message.create(messageData);
 
                 // for real  time message 
-              
-                const receiverWs = getUserWs(receiverId);
 
+                const receiverWs = getUserWs(receiverId);
+            
                 if(receiverWs)
                 {
                     receiverWs.send(JSON.stringify({
@@ -253,6 +263,8 @@ const sendMessage = async(req:Request,res:Response)=>{
                         data:newMessage
                     }));
                 }
+
+                console.log("Message sent via ws");
 
                 return res.status(200).json({success:true,data:newMessage,message:"Message sent successfully"});
             }

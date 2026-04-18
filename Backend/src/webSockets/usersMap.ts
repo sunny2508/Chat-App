@@ -1,6 +1,6 @@
 import type { AuthenticateWebSocket } from "./auth.js";
 
-const onlineUsers = new Map<string,AuthenticateWebSocket>();
+export const onlineUsers = new Map<string,AuthenticateWebSocket>();
 
 
 const addUser = (userId:string,ws:AuthenticateWebSocket)=>{
